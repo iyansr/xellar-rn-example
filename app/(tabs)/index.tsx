@@ -1,23 +1,68 @@
-import { StyleSheet } from 'react-native';
+/* eslint-disable no-restricted-exports */
+import { useEffect, useState } from 'react';
+import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ListBanksResponse } from 'xellar-ew-sdk';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { XellarSDK } from 'xellar-ew-sdk/react-native';
+
+const sdk = new XellarSDK({
+  clientSecret: '',
+  env: 'sandbox',
+  rampableClientSecret: '',
+});
 
 export default function TabOneScreen() {
+  const [bankResponse, setBankResponse] = useState<ListBanksResponse | null>(
+    null,
+  );
+
+  const [registerResponse, setRegisterResponse] = useState<any | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const listBanksResponse = await sdk.rampableReference.listBanks();
+        setBankResponse(listBanksResponse);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }, []);
+
+  const handleRegister = async () => {
+    try {
+      const registerResponse = await sdk.auth.username.register(
+        'test-username-123',
+        'test-password-123',
+      );
+      setRegisterResponse(registerResponse);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <Text style={styles.title}>Tab One</Text>
+        <Button title="Register" onPress={handleRegister} />
+        <Text>
+          {bankResponse ? JSON.stringify(bankResponse, null, 2) : 'No banks'}
+        </Text>
+        <Text>
+          {registerResponse
+            ? JSON.stringify(registerResponse, null, 2)
+            : 'No register response'}
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   title: {
     fontSize: 20,
